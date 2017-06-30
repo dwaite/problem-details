@@ -1,0 +1,119 @@
+description = 'Utility code for reporting Problem Details (based on RFC 7807)'
+apply plugin: 'java'
+apply plugin: 'java-library'
+apply plugin: 'project-report'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'ch.raffael.pegdown-doclet'
+apply plugin: 'findbugs'
+
+group "com.github.dwaite"
+version		= '1.0.0'
+
+sourceCompatibility = 1.8
+
+
+findbugs {
+    effort = 'max'
+    reportLevel = 'low'
+}
+
+findbugsMain {
+	reports {
+    xml.enabled = false
+    html.enabled = true
+	}
+}
+javadoc {
+	failOnError = false
+	options {
+		locale 'en'
+//		overview = "$projectDir/src/main/javadoc/overview.html"
+                linkSource = true
+                links = [
+                        'http://docs.oracle.com/javase/8/docs/api/'
+                ]
+                footer = """
+              <a href="https://github.com/dwaite/problem-details/" target="_top">
+                <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub">
+              </a>
+                """
+	}
+}
+task sourceJar(type: Jar) {
+	from sourceSets.main.allJava
+	classifier 'source'
+}
+
+
+task javadocJar(type: Jar) {
+	classifier 'javadoc'
+	from javadoc
+}
+	
+artifacts {
+    archives sourceJar
+    // archives javadocJar
+}
+buildscript {
+	repositories {
+		jcenter()
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'com.github.ben-manes:gradle-versions-plugin:+'
+		classpath 'ch.raffael.pegdown-doclet:pegdown-doclet:1.3'
+		
+	}
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+signing {
+	sign configurations.archives
+}
+
+dependencies {
+    api 'javax.ws.rs:javax.ws.rs-api:2.0.1'
+    api 'javax.json:javax.json-api:1.0'
+    compileOnly 'javax.validation:validation-api:1.1.0.Final'
+    testImplementation 'junit:junit:4.12'
+}
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			repository(url: "file://localhost/tmp/repo/")
+			pom.project {
+				inceptionYear '2016'
+				url 'https://github.com/dwaite/problem-details'
+				description 'Utility code for reporting Problem Details (based on RFC 7807)'
+				developers {
+					developer {
+						id 'dwaite'
+						name 'David Waite'
+						email 'david@alkaline-solutions.com'
+						organization 'Alkaline Solutions'
+						organizationUrl 'https://www.alkaline-solutions.com'
+					}
+				}
+				licenses {
+					license {
+						name 'The Apache Software License, Version 2.0'
+						url 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+						distribution 'repo'
+					}
+				}
+				scm {
+					connection 'scm:git:https://github.com/dwaite/problem-details.git'
+					url 'https://github.com/dwaite/problem-details'
+				}
+			}
+			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+		}
+	}
+}
